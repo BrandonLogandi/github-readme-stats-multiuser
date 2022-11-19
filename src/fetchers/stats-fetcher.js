@@ -181,7 +181,33 @@ const totalStarsFetcher = async (username, repoToHide) => {
 };
 
 /**
- * Fetch stats for a given username.
+ * Combines and formats the given usernames adding commas and an ampersand if needed.
+ *
+ * @param {string[]} names The names to combine
+ * @returns {Promise<string>} The names combined into a single string
+ */
+const combineNames = async (names) => {
+  if (names.length === 1) {
+    return names[0];
+  }
+
+  let finalNames = "";
+
+  for (const name of names) {
+    if (names.indexOf(name) === 0) {
+      finalNames += name;
+    } else if (names.indexOf(name) === names.length - 1) {
+      finalNames += " & " + name;
+    } else {
+      finalNames += ", " + name;
+    }
+  }
+
+  return finalNames;
+};
+
+/**
+ * Fetch stats for the given usernames.
  *
  * @param {string} usernames GitHub usernames separated by commas.
  * @param {boolean} count_private Include private contributions.
@@ -209,6 +235,7 @@ async function fetchStats(
   };
 
   const usernamesArray = usernames.split(",");
+  const names = [];
 
   for (const username of usernamesArray) {
     let res = await retryer(fetcher, { login: username });
@@ -244,10 +271,9 @@ async function fetchStats(
         repoToHide[repoName] = true;
       });
     }
-    //TODO: Show name of all users fetched
-    if (stats.name === "") {
-      stats.name = user.name || user.login;
-    }
+
+    names.push(user.name || user.login);
+
     stats.totalIssues +=
       user.openIssues.totalCount + user.closedIssues.totalCount;
 
@@ -278,6 +304,8 @@ async function fetchStats(
     // Retrieve total number of followers
     stats.totalFollowers += user.followers.totalCount;
   }
+
+  stats.name = await combineNames(names);
 
   stats.rank = calculateRank({
     totalCommits: stats.totalCommits,
