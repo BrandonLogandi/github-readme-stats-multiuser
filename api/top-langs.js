@@ -15,7 +15,7 @@ dotenv.config();
 
 export default async (req, res) => {
   const {
-    username,
+    usernames,
     hide,
     hide_title,
     hide_border,
@@ -35,8 +35,10 @@ export default async (req, res) => {
   } = req.query;
   res.setHeader("Content-Type", "image/svg+xml");
 
-  if (blacklist.includes(username)) {
-    return res.send(renderError("Something went wrong"));
+  for (const username in usernames.split(",")) {
+    if (blacklist.includes(username)) {
+      return res.send(renderError("Something went wrong"));
+    }
   }
 
   if (locale && !isLocaleAvailable(locale)) {
@@ -45,7 +47,7 @@ export default async (req, res) => {
 
   try {
     const topLangs = await fetchTopLanguages(
-      username,
+      usernames,
       parseArray(exclude_repo),
     );
 

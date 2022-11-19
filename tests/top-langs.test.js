@@ -75,7 +75,7 @@ describe("Test /api/top-langs", () => {
   it("should test the request", async () => {
     const req = {
       query: {
-        username: "anuraghazra",
+        usernames: "anuraghazra",
       },
     };
     const res = {
@@ -93,7 +93,7 @@ describe("Test /api/top-langs", () => {
   it("should work with the query options", async () => {
     const req = {
       query: {
-        username: "anuraghazra",
+        usernames: "anuraghazra",
         hide_title: true,
         card_width: 100,
         title_color: "fff",
@@ -126,7 +126,7 @@ describe("Test /api/top-langs", () => {
   it("should render error card on error", async () => {
     const req = {
       query: {
-        username: "anuraghazra",
+        usernames: "anuraghazra",
       },
     };
     const res = {
