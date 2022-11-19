@@ -130,7 +130,7 @@ const totalCommitsFetcher = async (username) => {
     let res = await retryer(fetchTotalCommits, { login: username });
     let total_count = res.data.total_count;
     if (!!total_count && !isNaN(total_count)) {
-      return res.data.total_count;
+      return total_count;
     }
   } catch (err) {
     logger.log(err);
@@ -183,18 +183,18 @@ const totalStarsFetcher = async (username, repoToHide) => {
 /**
  * Fetch stats for a given username.
  *
- * @param {string} username GitHub username.
+ * @param {string} usernames GitHub usernames separated by commas.
  * @param {boolean} count_private Include private contributions.
  * @param {boolean} include_all_commits Include all commits.
  * @returns {Promise<import("./types").StatsData>} Stats data.
  */
 async function fetchStats(
-  username,
+  usernames,
   count_private = false,
   include_all_commits = false,
   exclude_repo = [],
 ) {
-  if (!username) throw new MissingParamError(["username"]);
+  if (!usernames) throw new MissingParamError(["usernames"]);
 
   const stats = {
     name: "",
@@ -202,72 +202,87 @@ async function fetchStats(
     totalCommits: 0,
     totalIssues: 0,
     totalStars: 0,
+    totalRepos: 0,
+    totalFollowers: 0,
     contributedTo: 0,
     rank: { level: "C", score: 0 },
   };
 
-  let res = await retryer(fetcher, { login: username });
+  const usernamesArray = usernames.split(",");
 
-  // Catch GraphQL errors.
-  if (res.data.errors) {
-    logger.error(res.data.errors);
-    if (res.data.errors[0].type === "NOT_FOUND") {
+  for (const username of usernamesArray) {
+    let res = await retryer(fetcher, { login: username });
+
+    // Catch GraphQL errors.
+    if (res.data.errors) {
+      logger.error(res.data.errors);
+      if (res.data.errors[0].type === "NOT_FOUND") {
+        throw new CustomError(
+          res.data.errors[0].message || "Could not fetch user.",
+          CustomError.USER_NOT_FOUND,
+        );
+      }
+      if (res.data.errors[0].message) {
+        throw new CustomError(
+          wrapTextMultiline(res.data.errors[0].message, 90, 1)[0],
+          res.statusText,
+        );
+      }
       throw new CustomError(
-        res.data.errors[0].message || "Could not fetch user.",
-        CustomError.USER_NOT_FOUND,
+        "Something went while trying to retrieve the stats data using the GraphQL API.",
+        CustomError.GRAPHQL_ERROR,
       );
     }
-    if (res.data.errors[0].message) {
-      throw new CustomError(
-        wrapTextMultiline(res.data.errors[0].message, 90, 1)[0],
-        res.statusText,
-      );
+
+    const user = res.data.data.user;
+
+    // populate repoToHide map for quick lookup
+    // while filtering out
+    let repoToHide = {};
+    if (exclude_repo) {
+      exclude_repo.forEach((repoName) => {
+        repoToHide[repoName] = true;
+      });
     }
-    throw new CustomError(
-      "Something went while trying to retrieve the stats data using the GraphQL API.",
-      CustomError.GRAPHQL_ERROR,
-    );
+    //TODO: Show name of all users fetched
+    if (stats.name === "") {
+      stats.name = user.name || user.login;
+    }
+    stats.totalIssues +=
+      user.openIssues.totalCount + user.closedIssues.totalCount;
+
+    // if include_all_commits then just get that,
+    // if not, include normal commits only
+    if (include_all_commits) {
+      stats.totalCommits += await totalCommitsFetcher(username);
+    } else {
+      stats.totalCommits +=
+        user.contributionsCollection.totalCommitContributions;
+    }
+
+    // if count_private then add private commits to totalCommits so far.
+    if (count_private) {
+      stats.totalCommits +=
+        user.contributionsCollection.restrictedContributionsCount;
+    }
+
+    stats.totalPRs += user.pullRequests.totalCount;
+    stats.contributedTo += user.repositoriesContributedTo.totalCount;
+
+    // Retrieve stars while filtering out repositories to be hidden
+    stats.totalStars += await totalStarsFetcher(username, repoToHide);
+
+    // Retrieve total number of repositories
+    stats.totalRepos += user.repositories.totalCount;
+
+    // Retrieve total number of followers
+    stats.totalFollowers += user.followers.totalCount;
   }
-
-  const user = res.data.data.user;
-
-  // populate repoToHide map for quick lookup
-  // while filtering out
-  let repoToHide = {};
-  if (exclude_repo) {
-    exclude_repo.forEach((repoName) => {
-      repoToHide[repoName] = true;
-    });
-  }
-
-  stats.name = user.name || user.login;
-  stats.totalIssues = user.openIssues.totalCount + user.closedIssues.totalCount;
-
-  // normal commits
-  stats.totalCommits = user.contributionsCollection.totalCommitContributions;
-
-  // if include_all_commits then just get that,
-  // since totalCommitsFetcher already sends totalCommits no need to +=
-  if (include_all_commits) {
-    stats.totalCommits = await totalCommitsFetcher(username);
-  }
-
-  // if count_private then add private commits to totalCommits so far.
-  if (count_private) {
-    stats.totalCommits +=
-      user.contributionsCollection.restrictedContributionsCount;
-  }
-
-  stats.totalPRs = user.pullRequests.totalCount;
-  stats.contributedTo = user.repositoriesContributedTo.totalCount;
-
-  // Retrieve stars while filtering out repositories to be hidden
-  stats.totalStars = await totalStarsFetcher(username, repoToHide);
 
   stats.rank = calculateRank({
     totalCommits: stats.totalCommits,
-    totalRepos: user.repositories.totalCount,
-    followers: user.followers.totalCount,
+    totalRepos: stats.totalRepos,
+    followers: stats.totalFollowers,
     contributions: stats.contributedTo,
     stargazers: stats.totalStars,
     prs: stats.totalPRs,

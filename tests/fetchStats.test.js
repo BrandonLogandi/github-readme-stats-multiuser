@@ -121,13 +121,15 @@ describe("Test fetchStats", () => {
     });
 
     expect(stats).toStrictEqual({
-      contributedTo: 61,
       name: "Anurag Hazra",
+      totalPRs: 300,
       totalCommits: 100,
       totalIssues: 200,
-      totalPRs: 300,
-      // totalStars: 400, // NOTE: Temporarily disable fetching of multiple pages. Done because of #2130.
       totalStars: 300, // NOTE: Temporarily disable fetching of multiple pages. Done because of #2130.
+      totalRepos: 5,
+      totalFollowers: 100,
+      contributedTo: 61,
+      // totalStars: 400, // NOTE: Temporarily disable fetching of multiple pages. Done because of #2130.
       rank,
     });
   });
@@ -155,8 +157,10 @@ describe("Test fetchStats", () => {
       contributedTo: 61,
       name: "Anurag Hazra",
       totalCommits: 100,
+      totalFollowers: 100,
       totalIssues: 200,
       totalPRs: 300,
+      totalRepos: 5,
       totalStars: 300,
       rank,
     });
@@ -188,6 +192,8 @@ describe("Test fetchStats", () => {
       contributedTo: 61,
       name: "Anurag Hazra",
       totalCommits: 150,
+      totalFollowers: 100,
+      totalRepos: 5,
       totalIssues: 200,
       totalPRs: 300,
       // totalStars: 400, // NOTE: Temporarily disable fetching of multiple pages. Done because of #2130.
@@ -218,6 +224,8 @@ describe("Test fetchStats", () => {
       name: "Anurag Hazra",
       totalCommits: 1050,
       totalIssues: 200,
+      totalFollowers: 100,
+      totalRepos: 5,
       totalPRs: 300,
       // totalStars: 400, // NOTE: Temporarily disable fetching of multiple pages. Done because of #2130.
       totalStars: 300, // NOTE: Temporarily disable fetching of multiple pages. Done because of #2130.
@@ -247,6 +255,8 @@ describe("Test fetchStats", () => {
       name: "Anurag Hazra",
       totalCommits: 1050,
       totalIssues: 200,
+      totalRepos: 5,
+      totalFollowers: 100,
       totalPRs: 300,
       // totalStars: 300, // NOTE: Temporarily disable fetching of multiple pages. Done because of #2130.
       totalStars: 200, // NOTE: Temporarily disable fetching of multiple pages. Done because of #2130.
