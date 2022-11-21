@@ -1,5 +1,4 @@
 // @ts-check
-import * as dotenv from "dotenv";
 import { retryer } from "../common/retryer.js";
 import {
   CustomError,
@@ -8,8 +7,6 @@ import {
   request,
   wrapTextMultiline,
 } from "../common/utils.js";
-
-dotenv.config();
 
 /**
  * Top languages fetcher object.
@@ -57,7 +54,7 @@ const fetcher = (variables, token) => {
  * @param {string[]} exclude_repo List of repositories to exclude.
  * @returns {Promise<import("./types").TopLangData>} Top languages data.
  */
-async function fetchTopLanguages(usernames, exclude_repo = []) {
+const fetchTopLanguages = async (usernames, exclude_repo = []) => {
   if (!usernames) throw new MissingParamError(["usernames"]);
 
   const usernamesArray = usernames.split(",");
@@ -152,7 +149,7 @@ async function fetchTopLanguages(usernames, exclude_repo = []) {
     }, {});
 
   return topLangs;
-}
+};
 
 export { fetchTopLanguages };
 export default fetchTopLanguages;

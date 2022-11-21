@@ -1,6 +1,5 @@
 // @ts-check
 import axios from "axios";
-import * as dotenv from "dotenv";
 import githubUsernameRegex from "github-username-regex";
 import { calculateRank } from "../calculateRank.js";
 import { retryer } from "../common/retryer.js";
@@ -11,8 +10,6 @@ import {
   request,
   wrapTextMultiline,
 } from "../common/utils.js";
-
-dotenv.config();
 
 /**
  * Stats fetcher object.
@@ -214,12 +211,12 @@ const combineNames = async (names) => {
  * @param {boolean} include_all_commits Include all commits.
  * @returns {Promise<import("./types").StatsData>} Stats data.
  */
-async function fetchStats(
+const fetchStats = async (
   usernames,
   count_private = false,
   include_all_commits = false,
   exclude_repo = [],
-) {
+) => {
   if (!usernames) throw new MissingParamError(["usernames"]);
 
   const stats = {
@@ -318,7 +315,7 @@ async function fetchStats(
   });
 
   return stats;
-}
+};
 
 export { fetchStats };
 export default fetchStats;

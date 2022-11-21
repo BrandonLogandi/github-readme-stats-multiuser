@@ -1,4 +1,3 @@
-import * as dotenv from "dotenv";
 import { renderStatsCard } from "../src/cards/stats-card.js";
 import { blacklist } from "../src/common/blacklist.js";
 import {
@@ -10,8 +9,6 @@ import {
 } from "../src/common/utils.js";
 import { fetchStats } from "../src/fetchers/stats-fetcher.js";
 import { isLocaleAvailable } from "../src/translations.js";
-
-dotenv.config();
 
 export default async (req, res) => {
   const {
@@ -66,7 +63,12 @@ export default async (req, res) => {
       CONSTANTS.ONE_DAY,
     );
 
-    res.setHeader("Cache-Control", `public, max-age=${cacheSeconds}`);
+    res.setHeader(
+      "Cache-Control",
+      `max-age=${
+        cacheSeconds / 2
+      }, s-maxage=${cacheSeconds}, stale-while-revalidate=${CONSTANTS.ONE_DAY}`,
+    );
 
     return res.send(
       renderStatsCard(stats, {
